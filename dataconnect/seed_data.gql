@@ -1,0 +1,98 @@
+mutation CreateDemoData @transaction @auth(level: USER, insecureReason: "Seed data mutation for demo purposes. Not for production use.") {
+  user_insertMany(data: [
+    {
+      id: "c6a1e5d7-1b02-4c3d-8e4f-5a6b7c8d9e01",
+      createdAt: "2023-01-01T10:00:00Z",
+      displayName: "Alice Smith",
+      email: "alice.smith@example.com",
+      photoUrl: "https://example.com/alice.jpg",
+      targetExamDate: "2024-06-30"
+    },
+    {
+      id: "a2b3c4d5-e6f7-8a9b-0c1d-2e3f4a5b6c7d",
+      createdAt: "2023-01-02T11:00:00Z",
+      displayName: "Bob Johnson",
+      email: "bob.johnson@example.com",
+      photoUrl: "https://example.com/bob.jpg",
+      targetExamDate: "2024-07-15"
+    }
+  ])
+  subject_insertMany(data: [
+    {
+      id: "d1e2f3g4-h5i6-j7k8-l9m0-n1o2p3q4r5s6",
+      userId: "c6a1e5d7-1b02-4c3d-8e4f-5a6b7c8d9e01",
+      createdAt: "2023-01-03T12:00:00Z",
+      description: "Mathematics for college entry exams",
+      name: "Mathematics",
+      targetScore: 90
+    },
+    {
+      id: "f8e7d6c5-b4a3-2b1c-0d9e-8f7a6b5c4d3e",
+      userId: "a2b3c4d5-e6f7-8a9b-0c1d-2e3f4a5b6c7d",
+      createdAt: "2023-01-04T13:00:00Z",
+      description: "English literature and comprehension",
+      name: "English",
+      targetScore: 85
+    }
+  ])
+  mockTest_insertMany(data: [
+    {
+      subjectId: "d1e2f3g4-h5i6-j7k8-l9m0-n1o2p3q4r5s6",
+      userId: "c6a1e5d7-1b02-4c3d-8e4f-5a6b7c8d9e01",
+      createdAt: "2023-02-10T09:00:00Z",
+      date: "2023-02-10",
+      notes: "First practice test for algebra topics.",
+      percentile: 0.75,
+      score: 78,
+      totalMarks: 100
+    },
+    {
+      subjectId: "f8e7d6c5-b4a3-2b1c-0d9e-8f7a6b5c4d3e",
+      userId: "a2b3c4d5-e6f7-8a9b-0c1d-2e3f4a5b6c7d",
+      createdAt: "2023-02-12T10:30:00Z",
+      date: "2023-02-12",
+      notes: "Reading comprehension and essay writing assessment.",
+      percentile: 0.82,
+      score: 88,
+      totalMarks: 100
+    }
+  ])
+  practiceSession_insertMany(data: [
+    {
+      subjectId: "d1e2f3g4-h5i6-j7k8-l9m0-n1o2p3q4r5s6",
+      userId: "c6a1e5d7-1b02-4c3d-8e4f-5a6b7c8d9e01",
+      createdAt: "2023-03-05T14:00:00Z",
+      date: "2023-03-05",
+      durationMinutes: 60,
+      notes: "Focused on calculus problems.",
+      questionsSolved: 25
+    },
+    {
+      subjectId: "f8e7d6c5-b4a3-2b1c-0d9e-8f7a6b5c4d3e",
+      userId: "a2b3c4d5-e6f7-8a9b-0c1d-2e3f4a5b6c7d",
+      createdAt: "2023-03-07T16:00:00Z",
+      date: "2023-03-07",
+      durationMinutes: 90,
+      notes: "Reviewing classic American literature.",
+      questionsSolved: 15
+    }
+  ])
+  revisionLog_insertMany(data: [
+    {
+      subjectId: "d1e2f3g4-h5i6-j7k8-l9m0-n1o2p3q4r5s6",
+      userId: "c6a1e5d7-1b02-4c3d-8e4f-5a6b7c8d9e01",
+      createdAt: "2023-04-01T18:00:00Z",
+      date: "2023-04-01",
+      description: "Reviewed geometry theorems and proofs.",
+      durationMinutes: 45
+    },
+    {
+      subjectId: "f8e7d6c5-b4a3-2b1c-0d9e-8f7a6b5c4d3e",
+      userId: "a2b3c4d5-e6f7-8a9b-0c1d-2e3f4a5b6c7d",
+      createdAt: "2023-04-03T17:30:00Z",
+      date: "2023-04-03",
+      description: "Practiced persuasive essay writing.",
+      durationMinutes: 60
+    }
+  ])
+}

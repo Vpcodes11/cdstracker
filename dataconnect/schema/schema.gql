@@ -1,0 +1,45 @@
+type User @table {
+  displayName: String!
+  email: String!
+  createdAt: Timestamp!
+  photoUrl: String
+  targetExamDate: Date
+}
+
+type Subject @table {
+  user: User!
+  name: String!
+  createdAt: Timestamp!
+  description: String
+  targetScore: Int
+}
+
+type PracticeSession @table {
+  user: User!
+  subject: Subject!
+  date: Date!
+  questionsSolved: Int!
+  durationMinutes: Int!
+  createdAt: Timestamp!
+  notes: String
+}
+
+type MockTest @table {
+  user: User!
+  subject: Subject!
+  date: Date!
+  score: Int!
+  totalMarks: Int!
+  createdAt: Timestamp!
+  notes: String
+  percentile: Float
+}
+
+type RevisionLog @table {
+  user: User!
+  subject: Subject!
+  date: Date!
+  description: String!
+  createdAt: Timestamp!
+  durationMinutes: Int
+}

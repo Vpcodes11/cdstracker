@@ -1,0 +1,6 @@
+connectorId: example
+generate:
+  javascriptSdk:
+    outputDir: ..\..\dataconnect-generated\js\example-connector
+    package: "@firebasegen/example-connector"
+    packageJsonDir: ..\..

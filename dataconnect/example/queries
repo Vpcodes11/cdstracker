@@ -1,0 +1,64 @@
+query GetCurrentUserSubjects @auth(level: USER, insecureReason: "This operation is safe to expose to all logged in users.") {
+  subjects(where: { userId: { eq_expr: "auth.uid" } }) {
+    id
+    name
+    description
+    targetScore
+    createdAt
+  }
+}
+
+mutation CreatePracticeSession($subjectId: UUID!, $date: Date!, $durationMinutes: Int!, $questionsSolved: Int!, $notes: String) @auth(level: USER) {
+  practiceSession_insert(
+    data: {
+      userId_expr: "auth.uid"
+      subjectId: $subjectId
+      date: $date
+      durationMinutes: $durationMinutes
+      questionsSolved: $questionsSolved
+      notes: $notes
+      createdAt_expr: "request.time"
+    }
+  )
+}
+
+query GetSubjectDetails($subjectId: UUID!) @auth(level: USER) {
+  subject(id: $subjectId, where: { userId: { eq_expr: "auth.uid" } }) {
+    id
+    name
+    description
+    targetScore
+    createdAt
+    mockTests_on_subject {
+      id
+      date
+      score
+      totalMarks
+      percentile
+      notes
+      createdAt
+    }
+    practiceSessions_on_subject {
+      id
+      date
+      durationMinutes
+      questionsSolved
+      notes
+      createdAt
+    }
+    revisionLogs_on_subject {
+      id
+      date
+      description
+      durationMinutes
+      createdAt
+    }
+  }
+}
+
+mutation UpdateUserTargetExamDate($targetExamDate: Date) @auth(level: USER) {
+  user_update(
+    key: { id_expr: "auth.uid" }
+    data: { targetExamDate: $targetExamDate }
+  )
+}
