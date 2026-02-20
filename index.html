@@ -1,5 +1,6 @@
 ﻿<!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8" />
   <link rel="icon" type="image/svg+xml" href="/vite.svg" />
@@ -10,15 +11,15 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="./style.css">
 </head>
+
 <body>
-  <!-- Mobile top bar visible only on mobile -->
+  <!-- Mobile top bar (visible only on <=768px) -->
   <header class="mobile-header">
     <button class="hamburger-btn" id="hamburger-btn" aria-label="Open menu" aria-expanded="false">
-      <span></span>
-      <span></span>
-      <span></span>
+      <span></span><span></span><span></span>
     </button>
     <span class="mobile-logo">CDS TRACKER</span>
+    <button class="theme-toggle-btn" id="theme-toggle-mobile" aria-label="Toggle theme">🌙</button>
   </header>
 
   <div id="app">
@@ -31,63 +32,70 @@
           CDS TRACKER
         </div>
       </div>
+
       <ul class="nav-links">
         <li class="nav-item active" data-view="dashboard">
-          <span class="nav-icon" data-lucide="layout-dashboard"></span>
-          Dashboard
+          <span class="nav-icon" data-lucide="layout-dashboard"></span>Dashboard
         </li>
         <li class="nav-item" data-view="practice">
-          <span class="nav-icon" data-lucide="edit-3"></span>
-          Daily Practice
+          <span class="nav-icon" data-lucide="edit-3"></span>Daily Practice
         </li>
         <li class="nav-item" data-view="mocks">
-          <span class="nav-icon" data-lucide="bar-chart-2"></span>
-          Mock Tests
+          <span class="nav-icon" data-lucide="bar-chart-2"></span>Mock Tests
         </li>
         <li class="nav-item" data-view="improvement">
-          <span class="nav-icon" data-lucide="trending-up"></span>
-          Improvement
+          <span class="nav-icon" data-lucide="trending-up"></span>Improvement
         </li>
         <li class="nav-item" data-view="vocab">
-          <span class="nav-icon" data-lucide="book-open"></span>
-          Vocabulary
+          <span class="nav-icon" data-lucide="book-open"></span>Vocabulary
         </li>
         <li class="nav-item" data-view="performance">
-          <span class="nav-icon" data-lucide="target"></span>
-          Topic Performance
+          <span class="nav-icon" data-lucide="target"></span>Topic Performance
         </li>
       </ul>
 
-      <div style="margin-top: auto; padding: 20px; border-top: 1px solid var(--border-color); display: flex; flex-direction: column; gap: 10px;">
-        <div id="user-profile" style="display: none; align-items: center; gap: 10px; margin-bottom: 5px;">
-          <img id="user-avatar" src="" alt="User" style="width: 32px; height: 32px; border-radius: 50%; object-fit: cover;">
-          <div style="overflow: hidden;">
-            <div id="user-name" style="font-size: 14px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;"></div>
-            <div style="font-size: 11px; color: var(--text-secondary);">Logged In</div>
+      <div
+        style="margin-top:auto;padding:20px 0;border-top:1px solid var(--border-color);display:flex;flex-direction:column;gap:10px;">
+        <!-- User profile (shown when logged in) -->
+        <div id="user-profile" style="display:none;align-items:center;gap:10px;margin-bottom:5px;">
+          <img id="user-avatar" src="" alt="User" style="width:32px;height:32px;border-radius:50%;object-fit:cover;">
+          <div style="overflow:hidden;flex:1;">
+            <div id="user-name"
+              style="font-size:14px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;"></div>
+            <div id="user-email"
+              style="font-size:11px;color:var(--text-secondary);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
+            </div>
           </div>
         </div>
 
-        <button id="login-btn" class="btn btn-primary" style="width: 100%; display: flex; align-items: center; justify-content: center; gap: 8px;">
-          <span data-lucide="log-in" style="width: 16px;"></span>
-          Sign in
+        <!-- Sign in / Sign out -->
+        <button id="login-btn" class="btn btn-primary"
+          style="width:100%;display:flex;align-items:center;justify-content:center;gap:8px;">
+          <span data-lucide="log-in" style="width:16px;"></span>Sign In / Register
+        </button>
+        <button id="logout-btn" class="btn btn-secondary"
+          style="width:100%;display:none;align-items:center;justify-content:center;gap:8px;">
+          <span data-lucide="log-out" style="width:16px;"></span>Sign Out
         </button>
 
-        <button id="logout-btn" class="btn btn-secondary" style="width: 100%; display: none; align-items: center; justify-content: center; gap: 8px;">
-          <span data-lucide="log-out" style="width: 16px;"></span>
-          Sign Out
-        </button>
-
-        <button id="export-excel" class="btn btn-secondary" style="width: 100%; display: flex; align-items: center; gap: 8px; justify-content: center;">
-          <span data-lucide="download" style="width: 16px;"></span>
-          Export to Excel
-        </button>
+        <!-- Theme + Export row -->
+        <div style="display:flex;gap:8px;">
+          <button id="theme-toggle-sidebar" class="theme-toggle-btn" aria-label="Toggle theme">🌙</button>
+          <button id="export-excel" class="btn btn-secondary"
+            style="flex:1;display:flex;align-items:center;gap:8px;justify-content:center;">
+            <span data-lucide="download" style="width:16px;"></span>Export
+          </button>
+        </div>
       </div>
     </nav>
 
-    <main class="main-content" id="main-view">
-      <!-- Content injected here -->
-    </main>
+    <main class="main-content" id="main-view"></main>
   </div>
+
+  <!-- Auth modal mount point -->
+  <div id="auth-modal-root"></div>
+
   <script type="module" src="/main.js"></script>
 </body>
+
 </html>
