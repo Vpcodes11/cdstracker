@@ -1,6 +1,5 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
-
 <head>
   <meta charset="UTF-8" />
   <link rel="icon" type="image/svg+xml" href="/vite.svg" />
@@ -11,10 +10,21 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="./style.css">
 </head>
-
 <body>
+  <!-- Mobile top bar visible only on mobile -->
+  <header class="mobile-header">
+    <button class="hamburger-btn" id="hamburger-btn" aria-label="Open menu" aria-expanded="false">
+      <span></span>
+      <span></span>
+      <span></span>
+    </button>
+    <span class="mobile-logo">CDS TRACKER</span>
+  </header>
+
   <div id="app">
-    <nav class="sidebar">
+    <div class="sidebar-overlay" id="sidebar-overlay"></div>
+
+    <nav class="sidebar" id="sidebar">
       <div class="sidebar-header">
         <div class="logo">
           <span id="logo-icon"></span>
@@ -48,34 +58,26 @@
         </li>
       </ul>
 
-      <div
-        style="margin-top: auto; padding: 20px; border-top: 1px solid var(--border-color); display: flex; flex-direction: column; gap: 10px;">
-        <!-- User Profile Section -->
+      <div style="margin-top: auto; padding: 20px; border-top: 1px solid var(--border-color); display: flex; flex-direction: column; gap: 10px;">
         <div id="user-profile" style="display: none; align-items: center; gap: 10px; margin-bottom: 5px;">
-          <img id="user-avatar" src="" alt="User"
-            style="width: 32px; height: 32px; border-radius: 50%; object-fit: cover;">
+          <img id="user-avatar" src="" alt="User" style="width: 32px; height: 32px; border-radius: 50%; object-fit: cover;">
           <div style="overflow: hidden;">
-            <div id="user-name"
-              style="font-size: 14px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
-            </div>
+            <div id="user-name" style="font-size: 14px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;"></div>
             <div style="font-size: 11px; color: var(--text-secondary);">Logged In</div>
           </div>
         </div>
 
-        <button id="login-btn" class="btn btn-primary"
-          style="width: 100%; display: flex; align-items: center; justify-content: center; gap: 8px;">
+        <button id="login-btn" class="btn btn-primary" style="width: 100%; display: flex; align-items: center; justify-content: center; gap: 8px;">
           <span data-lucide="log-in" style="width: 16px;"></span>
           Sign in
         </button>
 
-        <button id="logout-btn" class="btn btn-secondary"
-          style="width: 100%; display: none; align-items: center; justify-content: center; gap: 8px;">
+        <button id="logout-btn" class="btn btn-secondary" style="width: 100%; display: none; align-items: center; justify-content: center; gap: 8px;">
           <span data-lucide="log-out" style="width: 16px;"></span>
           Sign Out
         </button>
 
-        <button id="export-excel" class="btn btn-secondary"
-          style="width: 100%; display: flex; align-items: center; gap: 8px; justify-content: center;">
+        <button id="export-excel" class="btn btn-secondary" style="width: 100%; display: flex; align-items: center; gap: 8px; justify-content: center;">
           <span data-lucide="download" style="width: 16px;"></span>
           Export to Excel
         </button>
@@ -83,10 +85,9 @@
     </nav>
 
     <main class="main-content" id="main-view">
-      <!-- Content will be injected here -->
+      <!-- Content injected here -->
     </main>
   </div>
   <script type="module" src="/main.js"></script>
 </body>
-
 </html>
