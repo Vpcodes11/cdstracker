@@ -27,11 +27,23 @@ async function render(container) {
             </select>
           </div>
           <div class="input-group"><label>Topic</label><input type="text" name="topic" placeholder="e.g. Geometry, Ancient History" required></div>
-          <div class="input-group"><label>Attempted</label><input type="number" name="attempted" required min="1"></div>
-          <div class="input-group"><label>Correct</label><input type="number" name="correct" required min="0"></div>
-          <div class="input-group"><label>Wrong</label><input type="number" name="wrong" required min="0"></div>
+          <div class="input-group"><label>Total Questions</label><input type="number" id="calc-total" name="total" required min="1"></div>
+          <div class="input-group"><label>Correct</label><input type="number" id="calc-correct" name="correct" required min="0"></div>
+          <div class="input-group"><label>Left (Unattempted)</label><input type="number" id="calc-left" name="left" required min="0"></div>
+          <div class="input-group"><label>Wrong (Auto)</label><input type="number" id="calc-wrong" name="wrong" readonly style="background:var(--bg-color);opacity:0.8;"></div>
+          <div class="input-group"><label>Marks (Auto)</label><input type="number" id="calc-marks" name="marks" readonly step="0.01" style="background:var(--bg-color);opacity:0.8;"></div>
           <div class="input-group"><label>Source</label><input type="text" name="source" placeholder="e.g. Disha PYQ, Mock 1"></div>
         </div>
+        
+        <div id="calc-preview" style="margin-top:20px; padding:15px; background:var(--bg-color); border-radius:8px; border:1px solid var(--border-color); display:none;">
+           <div style="display:flex; justify-content:space-between; flex-wrap:wrap; gap:10px;">
+              <div><strong>Estimated Marks:</strong> <span id="preview-marks">0</span></div>
+              <div><strong>Accuracy:</strong> <span id="preview-accuracy">0%</span></div>
+              <div><strong>Attempt Rate:</strong> <span id="preview-attempt-rate">0%</span></div>
+           </div>
+           <div id="calc-error" style="color:var(--accent-red); margin-top:10px; font-size:0.9rem; display:none;"></div>
+        </div>
+
         <div class="input-group" style="margin-top:20px;">
           <label>Primary Error Types (if any)</label>
           <div style="display:flex;gap:16px;flex-wrap:wrap;margin-top:8px;">
@@ -43,7 +55,7 @@ async function render(container) {
         </div>
         <div style="display:flex;gap:12px;justify-content:flex-end;margin-top:24px;flex-wrap:wrap;">
           <button type="button" id="cancel-form" class="btn btn-secondary">Cancel</button>
-          <button type="submit" class="btn btn-primary">Save Session</button>
+          <button type="submit" id="save-session-btn" class="btn btn-primary">Save Session</button>
         </div>
       </form>
     </div>
@@ -54,17 +66,18 @@ async function render(container) {
         <table style="width:100%;border-collapse:collapse;text-align:left;min-width:520px;">
           <thead><tr style="border-bottom:1px solid var(--border-color);color:var(--text-secondary);font-size:0.85rem;">
             <th style="padding:12px;">Date</th><th style="padding:12px;">Subject</th><th style="padding:12px;">Topic</th>
-            <th style="padding:12px;">Accuracy</th><th style="padding:12px;">Score</th><th style="padding:12px;"></th>
+            <th style="padding:12px;">Score</th><th style="padding:12px;">Accuracy</th><th style="padding:12px;">Marks</th><th style="padding:12px;"></th>
           </tr></thead>
           <tbody>
-            ${practice.map(s=>`
+            ${practice.map(s => `
               <tr style="border-bottom:1px solid var(--border-color);">
                 <td style="padding:12px;">${new Date(s.timestamp).toLocaleDateString()}</td>
                 <td style="padding:12px;">${s.subject}</td>
                 <td style="padding:12px;">${s.topic}</td>
-                <td style="padding:12px;"><span style="color:${Number(s.correct)/Number(s.attempted)>0.7?'var(--accent-green)':'var(--accent-yellow)'}">
-                  ${Math.round((Number(s.correct)/Number(s.attempted))*100)}%</span></td>
-                <td style="padding:12px;">${s.correct}/${s.attempted}</td>
+                <td style="padding:12px;">${s.correct}/${s.total || s.attempted}</td>
+                <td style="padding:12px;"><span style="color:${Number(s.accuracy || (s.attempted ? s.correct / s.attempted * 100 : 0)) > 70 ? 'var(--accent-green)' : 'var(--accent-yellow)'}">
+                  ${Math.round(s.accuracy || (s.attempted ? s.correct / s.attempted * 100 : 0))}%</span></td>
+                <td style="padding:12px; font-weight:bold;">${s.marks !== undefined ? s.marks : '-'}</td>
                 <td style="padding:12px;"><button class="delete-session btn-secondary" data-id="${s.id}" style="padding:4px;border-radius:4px;">
                   <span data-lucide="trash-2" style="width:16px;"></span></button></td>
               </tr>`).join('')}
@@ -74,18 +87,118 @@ async function render(container) {
     </div>
   `;
 
-  document.getElementById('add-session-btn').onclick = () => document.getElementById('session-form-container').style.display = 'block';
+  document.getElementById('add-session-btn').onclick = () => {
+    document.getElementById('session-form-container').style.display = 'block';
+    document.getElementById('calc-preview').style.display = 'none';
+  };
   document.getElementById('cancel-form').onclick = () => document.getElementById('session-form-container').style.display = 'none';
+
+  const calcTotal = document.getElementById('calc-total');
+  const calcCorrect = document.getElementById('calc-correct');
+  const calcLeft = document.getElementById('calc-left');
+  const calcWrong = document.getElementById('calc-wrong');
+  const calcMarks = document.getElementById('calc-marks');
+  const previewDiv = document.getElementById('calc-preview');
+  const previewMarks = document.getElementById('preview-marks');
+  const previewAccuracy = document.getElementById('preview-accuracy');
+  const previewAttemptRate = document.getElementById('preview-attempt-rate');
+  const calcError = document.getElementById('calc-error');
+  const saveBtn = document.getElementById('save-session-btn');
+
+  const positive_mark = 1;
+  const negative_mark = 0.33;
+
+  function updateCalculations() {
+    const total = parseInt(calcTotal.value) || 0;
+    const correct = parseInt(calcCorrect.value) || 0;
+    const left = parseInt(calcLeft.value) || 0;
+
+    if (calcTotal.value === '' && calcCorrect.value === '' && calcLeft.value === '') {
+      previewDiv.style.display = 'none';
+      return;
+    }
+
+    previewDiv.style.display = 'block';
+    let hasError = false;
+    let errorMsg = '';
+
+    const wrong = total - correct - left;
+
+    if (wrong < 0) {
+      hasError = true;
+      errorMsg = 'Invalid: Correct + Left exceeds Total questions.';
+    }
+
+    if (hasError) {
+      calcError.textContent = errorMsg;
+      calcError.style.display = 'block';
+      calcWrong.value = '';
+      calcMarks.value = '';
+      previewMarks.textContent = '-';
+      previewAccuracy.textContent = '-';
+      previewAttemptRate.textContent = '-';
+      saveBtn.disabled = true;
+      return;
+    }
+
+    calcError.style.display = 'none';
+    saveBtn.disabled = false;
+
+    const marks = (correct * positive_mark) - (wrong * negative_mark);
+    const roundedMarks = Math.round(marks * 100) / 100;
+    const accuracy = total > 0 && (correct + wrong) > 0 ? (correct / (correct + wrong)) * 100 : 0;
+    const attemptRate = total > 0 ? ((correct + wrong) / total) * 100 : 0;
+
+    calcWrong.value = wrong;
+    calcMarks.value = roundedMarks;
+
+    previewMarks.textContent = roundedMarks;
+    previewAccuracy.textContent = accuracy.toFixed(2) + '%';
+    previewAttemptRate.textContent = attemptRate.toFixed(2) + '%';
+  }
+
+  calcTotal.addEventListener('input', updateCalculations);
+  calcCorrect.addEventListener('input', updateCalculations);
+  calcLeft.addEventListener('input', updateCalculations);
 
   document.getElementById('practice-form').onsubmit = async (e) => {
     e.preventDefault();
     const formData = new FormData(e.target);
     const entry = Object.fromEntries(formData.entries());
-    const attempted = Number(entry.attempted), correct = Number(entry.correct), wrong = Number(entry.wrong);
-    if (correct > attempted) { alert("Correct answers cannot be more than attempted!"); return; }
-    if (correct + wrong > attempted) { alert("Correct + Wrong cannot be more than Attempted!"); return; }
-    entry.errors = Array.from(e.target.querySelectorAll('input[name="errors"]:checked')).map(cb=>cb.value);
+
+    const total = Number(entry.total);
+    const correct = Number(entry.correct);
+    const left = Number(entry.left);
+    const wrong = total - correct - left;
+
+    if (wrong < 0) return;
+
+    entry.attempted = correct + wrong;
+    entry.accuracy = correct + wrong > 0 ? (correct / (correct + wrong)) * 100 : 0;
+    entry.attempt_rate = total > 0 ? ((correct + wrong) / total) * 100 : 0;
+
+    entry.errors = Array.from(e.target.querySelectorAll('input[name="errors"]:checked')).map(cb => cb.value);
     await addEntry(STORAGE_KEYS.PRACTICE, entry);
+
+    // Add to Revisions if wrong > 0
+    if (wrong > 0) {
+      const today = new Date();
+      const dueDate = new Date();
+      dueDate.setDate(today.getDate() + 2); // Initial schedule +2 days
+
+      const revisionEntry = {
+        subject: entry.subject,
+        topic: entry.topic,
+        wrong_count: wrong,
+        date_logged: today.toISOString(),
+        revisit_due_date: dueDate.toISOString(),
+        status: 'pending',
+        review_count: 0,
+        original_accuracy: entry.accuracy
+      };
+      await addEntry(STORAGE_KEYS.REVISIONS, revisionEntry);
+    }
+
     await render(container);
     createIcons({ icons: { Trash2 } });
   };

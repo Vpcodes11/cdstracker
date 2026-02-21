@@ -5,7 +5,8 @@ export const STORAGE_KEYS = {
   PRACTICE: 'practice', // collection names for firebase
   MOCKS: 'mocks',
   VOCAB: 'vocab',
-  SETTINGS: 'settings'
+  SETTINGS: 'settings',
+  REVISIONS: 'revisions'
 };
 
 // Helper to get current user
@@ -31,10 +32,15 @@ export const getStorageData = async (key) => {
   } else {
     // Fallback to localStorage
     // Map Firestore collection keys to localStorage keys
-    const localKey = `cds_${key}`;
+    const localKey = getLocalKey(key);
     const data = localStorage.getItem(localKey);
     return data ? JSON.parse(data) : [];
   }
+};
+
+export const getPendingRevisions = async () => {
+  const revisions = await getStorageData(STORAGE_KEYS.REVISIONS);
+  return revisions.filter(r => r.status !== 'mastered');
 };
 
 export const saveStorageData = async (key, data) => {
@@ -109,5 +115,6 @@ function getLocalKey(key) {
   if (key === STORAGE_KEYS.MOCKS) return 'cds_mock_tests';
   if (key === STORAGE_KEYS.VOCAB) return 'cds_vocabulary';
   if (key === STORAGE_KEYS.SETTINGS) return 'cds_settings';
+  if (key === STORAGE_KEYS.REVISIONS) return 'cds_revisions';
   return `cds_${key}`;
 }
