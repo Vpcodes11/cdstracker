@@ -1,5 +1,5 @@
-﻿import { addEntry, getStorageData, STORAGE_KEYS, deleteEntry } from '../utils/storage';
-import { createIcons, Trash2 } from 'lucide';
+﻿import { addEntry, getStorageData, STORAGE_KEYS, deleteEntry, updateEntry } from '../utils/storage';
+import { createIcons, Trash2, Edit2 } from 'lucide';
 
 export async function initPractice(container) { await render(container); }
 
@@ -16,7 +16,7 @@ async function render(container) {
     </header>
 
     <div id="session-form-container" style="display:none;" class="card">
-      <h3 style="margin-bottom:20px;">Log New Session</h3>
+      <h3 id="form-title" style="margin-bottom:20px;">Log New Session</h3>
       <form id="practice-form">
         <div class="form-grid">
           <div class="input-group"><label>Subject</label>
@@ -78,8 +78,14 @@ async function render(container) {
                 <td style="padding:12px;"><span style="color:${Number(s.accuracy || (s.attempted ? s.correct / s.attempted * 100 : 0)) > 70 ? 'var(--accent-green)' : 'var(--accent-yellow)'}">
                   ${Math.round(s.accuracy || (s.attempted ? s.correct / s.attempted * 100 : 0))}%</span></td>
                 <td style="padding:12px; font-weight:bold;">${s.marks !== undefined ? s.marks : '-'}</td>
-                <td style="padding:12px;"><button class="delete-session btn-secondary" data-id="${s.id}" style="padding:4px;border-radius:4px;">
-                  <span data-lucide="trash-2" style="width:16px;"></span></button></td>
+                <td style="padding:12px;display:flex;gap:8px;align-items:center;">
+                  <button class="edit-session btn-secondary" data-id="${s.id}" style="padding:4px;border-radius:4px;cursor:pointer;">
+                    <span data-lucide="edit-2" style="width:16px;"></span>
+                  </button>
+                  <button class="delete-session btn-secondary" data-id="${s.id}" style="padding:4px;border-radius:4px;cursor:pointer;">
+                    <span data-lucide="trash-2" style="width:16px;"></span>
+                  </button>
+                </td>
               </tr>`).join('')}
           </tbody>
         </table>
@@ -87,11 +93,22 @@ async function render(container) {
     </div>
   `;
 
-  document.getElementById('add-session-btn').onclick = () => {
-    document.getElementById('session-form-container').style.display = 'block';
+  let editingId = null;
+
+  function resetForm() {
+    document.getElementById('practice-form').reset();
+    document.getElementById('session-form-container').style.display = 'none';
     document.getElementById('calc-preview').style.display = 'none';
+    document.getElementById('form-title').textContent = 'Log New Session';
+    document.getElementById('save-session-btn').textContent = 'Save Session';
+    editingId = null;
+  }
+
+  document.getElementById('add-session-btn').onclick = () => {
+    resetForm();
+    document.getElementById('session-form-container').style.display = 'block';
   };
-  document.getElementById('cancel-form').onclick = () => document.getElementById('session-form-container').style.display = 'none';
+  document.getElementById('cancel-form').onclick = resetForm;
 
   const calcTotal = document.getElementById('calc-total');
   const calcCorrect = document.getElementById('calc-correct');
@@ -178,29 +195,58 @@ async function render(container) {
     entry.attempt_rate = total > 0 ? ((correct + wrong) / total) * 100 : 0;
 
     entry.errors = Array.from(e.target.querySelectorAll('input[name="errors"]:checked')).map(cb => cb.value);
-    await addEntry(STORAGE_KEYS.PRACTICE, entry);
 
-    // Add to Revisions if wrong > 0
-    if (wrong > 0) {
-      const today = new Date();
-      const dueDate = new Date();
-      dueDate.setDate(today.getDate() + 2); // Initial schedule +2 days
+    if (editingId) {
+      await updateEntry(STORAGE_KEYS.PRACTICE, editingId, entry);
 
-      const revisionEntry = {
-        subject: entry.subject,
-        topic: entry.topic,
-        wrong_count: wrong,
-        date_logged: today.toISOString(),
-        revisit_due_date: dueDate.toISOString(),
-        status: 'pending',
-        review_count: 0,
-        original_accuracy: entry.accuracy
-      };
-      await addEntry(STORAGE_KEYS.REVISIONS, revisionEntry);
+      // Try to find a pending revision
+      const revisions = await getStorageData(STORAGE_KEYS.REVISIONS);
+      const pendingRev = revisions.find(r => r.subject === entry.subject && r.topic === entry.topic && r.status !== 'mastered');
+
+      if (pendingRev) {
+        if (wrong === 0) {
+          await updateEntry(STORAGE_KEYS.REVISIONS, pendingRev.id, { status: 'mastered' });
+        } else {
+          await updateEntry(STORAGE_KEYS.REVISIONS, pendingRev.id, { wrong_count: wrong });
+        }
+      } else if (wrong > 0) {
+        // Create new revision if not found
+        const today = new Date();
+        const dueDate = new Date();
+        dueDate.setDate(today.getDate() + 2);
+        await addEntry(STORAGE_KEYS.REVISIONS, {
+          subject: entry.subject,
+          topic: entry.topic,
+          wrong_count: wrong,
+          date_logged: today.toISOString(),
+          revisit_due_date: dueDate.toISOString(),
+          status: 'pending',
+          review_count: 0,
+          original_accuracy: entry.accuracy
+        });
+      }
+    } else {
+      await addEntry(STORAGE_KEYS.PRACTICE, entry);
+
+      if (wrong > 0) {
+        const today = new Date();
+        const dueDate = new Date();
+        dueDate.setDate(today.getDate() + 2);
+        await addEntry(STORAGE_KEYS.REVISIONS, {
+          subject: entry.subject,
+          topic: entry.topic,
+          wrong_count: wrong,
+          date_logged: today.toISOString(),
+          revisit_due_date: dueDate.toISOString(),
+          status: 'pending',
+          review_count: 0,
+          original_accuracy: entry.accuracy
+        });
+      }
     }
 
+    resetForm();
     await render(container);
-    createIcons({ icons: { Trash2 } });
   };
 
   document.querySelectorAll('.delete-session').forEach(btn => {
@@ -213,5 +259,33 @@ async function render(container) {
     };
   });
 
-  createIcons({ icons: { Trash2 } });
+  document.querySelectorAll('.edit-session').forEach(btn => {
+    btn.onclick = () => {
+      const id = btn.dataset.id;
+      const session = practice.find(s => s.id === id);
+      if (session) {
+        editingId = id;
+        document.getElementById('form-title').textContent = 'Edit Session';
+        document.getElementById('save-session-btn').textContent = 'Update Session';
+        document.getElementById('session-form-container').style.display = 'block';
+
+        const form = document.getElementById('practice-form');
+        form.subject.value = session.subject;
+        form.topic.value = session.topic;
+        form.total.value = session.total || (session.attempted + (session.left || 0));
+        form.correct.value = session.correct;
+        form.left.value = session.left || 0;
+        form.source.value = session.source || '';
+
+        Array.from(form.querySelectorAll('input[name="errors"]')).forEach(cb => {
+          cb.checked = session.errors && session.errors.includes(cb.value);
+        });
+
+        updateCalculations();
+        document.getElementById('session-form-container').scrollIntoView({ behavior: 'smooth' });
+      }
+    };
+  });
+
+  createIcons({ icons: { Trash2, Edit2 } });
 }
